@@ -13,24 +13,25 @@ namespace BMBLibraries
     {
         public class Backup
         {
-            private Asset[] assets;
+            private string[] assets;
             private byte[][] backup;
 
             public Backup()
             {
-                assets = new Asset[0];
+                assets = new string[0];
                 backup = new byte[0][];
             }
 
             public Backup(AssetList assets)
             {
-                this.assets = assets.ToArray();
+                this.assets = new string[assets.ToArray().Length];
                 backup = new byte[this.assets.Length][];
                 for (int i = 0; i < this.assets.Length; i++)
                 {
                     try
                     {
-                        backup[i] = File.ReadAllBytes(this.assets[i].path);
+                        this.assets[i] = assets[i].path;
+                        backup[i] = File.ReadAllBytes(assets[i].path);
                     }
                     catch (Exception err)
                     {
@@ -45,7 +46,7 @@ namespace BMBLibraries
                 int index = -1;
                 for (int i = 0; i < assets.Length; i++)
                 {
-                    if (assets[i].path == asset.path)
+                    if (assets[i] == asset.path)
                     {
                         index = i;
                         break;
@@ -66,9 +67,9 @@ namespace BMBLibraries
                 }
                 else
                 {
-                    Asset[] newAssets = new Asset[assets.Length + 1];
+                    string[] newAssets = new string[assets.Length + 1];
                     assets.CopyTo(newAssets, 1);
-                    newAssets[0] = asset;
+                    newAssets[0] = asset.path;
                     assets = newAssets;
 
                     byte[][] newBytes = new byte[backup.Length + 1][];
@@ -94,16 +95,19 @@ namespace BMBLibraries
                     {
                         if (backup[i] == null)
                         {
-                            Debug.LogError("[Avatar Scaling] " + assets[i].name + "could not be restored.");
+                            return false;
                         }
                         else
                         {
-                            File.WriteAllBytes(assets[i].path, backup[i]);
+                            if (!File.Exists(assets[i]))
+                            {
+                                File.Create(assets[i]);
+                            }
+                            File.WriteAllBytes(assets[i], backup[i]);
                         }
                     }
                     catch (Exception err)
                     {
-                        Debug.LogError("[Avatar Scaling] " + assets[i].name + "could not be restored.");
                         Debug.LogError(err);
                         return false;
                     }
@@ -222,6 +226,17 @@ namespace BMBLibraries
 
                 return output;
             }
+
+            public static ChildAnimatorState DeepClone(this ChildAnimatorState childState)
+            {
+                ChildAnimatorState output = new ChildAnimatorState
+                {
+                    position = childState.position,
+                    state = childState.state.DeepClone()
+                };
+                return output;
+            }
+
             public static AnimatorState DeepClone(this AnimatorState state)
             {
                 AnimatorState output = new AnimatorState();
@@ -256,12 +271,26 @@ namespace BMBLibraries
                 }
                 return output;
             }
+            public static AnimatorTransitionBase DeepClone(this AnimatorTransitionBase transition, ChildAnimatorState childState)
+            {
+                AnimatorTransitionBase output = UnityEngine.Object.Instantiate(transition);
+                EditorUtility.CopySerialized(transition, output);
+                output.destinationState = childState.state;
+                return output;
+            }
+
+            public static AnimatorTransitionBase DeepClone(this AnimatorTransitionBase transition)
+            {
+                AnimatorTransitionBase output = UnityEngine.Object.Instantiate(transition);
+                EditorUtility.CopySerialized(transition, output);
+                return output;
+            }
+
             public static void SaveController(this AnimatorController source)
             {
                 string sourcePath = AssetDatabase.GetAssetPath(source);
                 foreach (AnimatorControllerLayer layer in source.layers)
                 {
-                    //if (AssetDatabase.GetAssetPath(a.stateMachine) != "") // doesn't work for some reasons
                     if (AssetDatabase.GetAssetPath(layer.stateMachine).Length == 0)
                     {
                         AssetDatabase.AddObjectToAsset(layer.stateMachine, sourcePath);
