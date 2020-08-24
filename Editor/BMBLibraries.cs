@@ -184,7 +184,7 @@ namespace BMBLibraries
                     AnimatorStateTransition[] outTransitions = new AnimatorStateTransition[machine.states[i].state.transitions.Length];
                     for (int j = 0; j < outTransitions.Length; j++)
                     {
-                        outTransitions[j] = (AnimatorStateTransition)DeepClone(machine.states[i].state.transitions[j], outStates);
+                        outTransitions[j] = (AnimatorStateTransition)DeepClone(machine.states[i].state.transitions[j], outStates, outMachines);
                     }
                     outStates[i].state.transitions = outTransitions;
                 }
@@ -194,7 +194,7 @@ namespace BMBLibraries
                 AnimatorStateTransition[] outAnyTransitions = new AnimatorStateTransition[machine.anyStateTransitions.Length];
                 for (int i = 0; i < outAnyTransitions.Length; i++)
                 {
-                    outAnyTransitions[i] = (AnimatorStateTransition)DeepClone(machine.anyStateTransitions[i], outStates);
+                    outAnyTransitions[i] = (AnimatorStateTransition)DeepClone(machine.anyStateTransitions[i], outStates, outMachines);
                 }
                 output.anyStateTransitions = outAnyTransitions;
 
@@ -202,7 +202,7 @@ namespace BMBLibraries
                 AnimatorTransition[] outEntryTransitions = new AnimatorTransition[machine.entryTransitions.Length];
                 for (int i = 0; i < outEntryTransitions.Length; i++)
                 {
-                    outEntryTransitions[i] = (AnimatorTransition)DeepClone(machine.entryTransitions[i], outStates);
+                    outEntryTransitions[i] = (AnimatorTransition)DeepClone(machine.entryTransitions[i], outStates, outMachines);
                 }
                 output.entryTransitions = outEntryTransitions;
 
@@ -257,7 +257,7 @@ namespace BMBLibraries
                 EditorUtility.CopySerialized(behavior, output);
                 return output;
             }
-            public static AnimatorTransitionBase DeepClone(this AnimatorTransitionBase transition, ChildAnimatorState[] states)
+            public static AnimatorTransitionBase DeepClone(this AnimatorTransitionBase transition, ChildAnimatorState[] states, ChildAnimatorStateMachine[] machines)
             {
                 AnimatorTransitionBase output = UnityEngine.Object.Instantiate(transition);
                 EditorUtility.CopySerialized(transition, output);
@@ -266,6 +266,14 @@ namespace BMBLibraries
                     if (output.destinationState.name == states[i].state.name)
                     {
                         output.destinationState = states[i].state;
+                        break;
+                    }
+                }
+                for (int i = 0; i < machines.Length && output.destinationStateMachine != null; i++)
+                {
+                    if (output.destinationStateMachine.name == machines[i].stateMachine.name)
+                    {
+                        output.destinationStateMachine = machines[i].stateMachine;
                         break;
                     }
                 }
