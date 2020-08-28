@@ -242,6 +242,11 @@ namespace BMBLibraries
                 AnimatorState output = new AnimatorState();
                 EditorUtility.CopySerialized(state, output);
 
+                if (state.motion != null && state.motion.GetType() == typeof(BlendTree) && AssetDatabase.GetAssetPath(((BlendTree)state.motion).GetInstanceID()) == AssetDatabase.GetAssetPath(state.GetInstanceID()))
+                {
+                    output.motion = ((BlendTree)state.motion).DeepClone();
+                }
+
                 StateMachineBehaviour[] outBehaviors = new StateMachineBehaviour[state.behaviours.Length];
                 for (int i = 0; i < outBehaviors.Length; i++)
                 {
@@ -251,6 +256,38 @@ namespace BMBLibraries
 
                 return output;
             }
+
+            public static BlendTree DeepClone(this BlendTree tree)
+            {
+                BlendTree output = new BlendTree();
+                EditorUtility.CopySerialized(tree, output);
+
+                ChildMotion[] children = new ChildMotion[tree.children.Length];
+                for (int i = 0; i < children.Length; i++)
+                {
+                    children[i] = tree.children[i].DeepClone();
+                }
+                output.children = children;
+
+                return output;
+            }
+
+            public static ChildMotion DeepClone(this ChildMotion child)
+            {
+                ChildMotion output = new ChildMotion
+                {
+                    cycleOffset = child.cycleOffset,
+                    directBlendParameter = child.directBlendParameter,
+                    mirror = child.mirror,
+                    position = child.position,
+                    threshold = child.threshold,
+                    timeScale = child.timeScale,
+                    motion = (child.motion != null && child.motion.GetType() == typeof(BlendTree)) ? ((BlendTree)child.motion).DeepClone() : child.motion
+                };
+
+                return output;
+            }
+
             public static StateMachineBehaviour DeepClone(this StateMachineBehaviour behavior)
             {
                 StateMachineBehaviour output = (StateMachineBehaviour)ScriptableObject.CreateInstance(behavior.GetType());
@@ -319,6 +356,10 @@ namespace BMBLibraries
                             AssetDatabase.AddObjectToAsset(childState.state, sourcePath);
                             childState.state.hideFlags = HideFlags.HideInHierarchy;
                         }
+                        if (childState.state.motion != null && childState.state.motion.GetType() == typeof(BlendTree))
+                        {
+                            SaveControllerHelper((BlendTree)childState.state.motion, sourcePath);
+                        }
                         foreach (var stateBehavior in childState.state.behaviours)
                         {
                             if (AssetDatabase.GetAssetPath(stateBehavior).Length == 0)
@@ -360,6 +401,22 @@ namespace BMBLibraries
                             machineBehavior.hideFlags = HideFlags.HideInHierarchy;
                         }
                     }
+                }
+            }
+
+            private static void SaveControllerHelper(BlendTree tree, string sourcePath)
+            {
+                foreach (ChildMotion motion in tree.children)
+                {
+                    if (motion.motion != null && motion.motion.GetType() == typeof(BlendTree))
+                    {
+                        SaveControllerHelper((BlendTree)motion.motion, sourcePath);
+                    }
+                }
+                if (AssetDatabase.GetAssetPath(tree).Length == 0)
+                {
+                    AssetDatabase.AddObjectToAsset(tree, sourcePath);
+                    tree.hideFlags = HideFlags.HideInHierarchy;
                 }
             }
         }
