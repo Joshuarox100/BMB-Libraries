@@ -1,4 +1,5 @@
-﻿using UnityEditor;
+﻿#if UNITY_EDITOR
+using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
@@ -297,3 +298,4 @@ namespace BMBLibraries
         }
     }
 }
+#endif

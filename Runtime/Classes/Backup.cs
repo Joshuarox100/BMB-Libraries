@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.IO;
 using UnityEditor.VersionControl;
 using UnityEngine;
@@ -113,3 +114,4 @@ namespace BMBLibraries
         }
     }
 }
+#endif

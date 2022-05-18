@@ -1,0 +1,12 @@
+{
+  "name": "com.joshuarox100.bmblibraries",
+  "displayName": "BMB Libraries",
+  "version": "1.0.0",
+  "unity": "2019.4",
+  "description": "Common Library",
+  "gitDependencies": {},
+  "url": "https://github.com/Joshuarox100/BMB-Libraries.git",
+  "legacyFolders": {
+    "Assets\\BMB Libraries": ""
+  }
+}
